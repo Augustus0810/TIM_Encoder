@@ -120,6 +120,7 @@ int main(void)
       {
         printf("顺时针旋转%d，当前位置：%d\r\n",diff,encode_cnt);
       }
+      encode_last = encode_cnt;
     }
     else 
     {
