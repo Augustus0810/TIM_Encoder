@@ -18,13 +18,17 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "stm32f1xx_hal.h"
+#include "stm32f1xx_hal_tim.h"
+#include "stm32f1xx_hal_uart.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include <stdint.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,6 +49,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+int8_t encode_cnt = 0;//当前值
+int8_t encode_last = 0;//最后转动值
+uint8_t last_move_time = 0;//最后转动时间
+uint8_t encode_static = 0;//0为运动，1为静止
 
 /* USER CODE END PV */
 
@@ -91,13 +99,36 @@ int main(void)
   MX_TIM3_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    encode_cnt = __HAL_TIM_GET_COUNTER(&htim3);//获取当前编码器计数值
+    if(encode_cnt != encode_last)//判断编码器是否转动
+    {
+      encode_static = 0;//静止状态标志置0
+      last_move_time = HAL_GetTick();//获取当前时间作为最后转动时间
+      int8_t diff = encode_cnt - encode_last;//转动变化值
+      if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim3))///判断编码器计数值是否递减从而判断是否逆时针转
+      {
+        printf("逆时针旋转%d，当前位置：%d\r\n",diff,encode_cnt);
+      }
+      else 
+      {
+        printf("顺时针旋转%d，当前位置：%d\r\n",diff,encode_cnt);
+      }
+    }
+    else 
+    {
+      if(HAL_GetTick() - last_move_time >= 2000 && encode_static == 0)//静止超过2s后只发送一次
+      {
+        encode_static = 1;
+        printf("当前编码器静止超过2s，等待重新转动....\r\n");
+      }
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -145,7 +176,12 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+int __io_putchar(int ch)
+{
+  uint8_t data = (uint8_t)ch;
+  HAL_UART_Transmit(&huart1, &data, 1, HAL_MAX_DELAY);
+  return ch;
+}
 /* USER CODE END 4 */
 
 /**
