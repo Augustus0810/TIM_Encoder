@@ -51,7 +51,7 @@
 /* USER CODE BEGIN PV */
 int8_t encode_cnt = 0;//当前值
 int8_t encode_last = 0;//最后转动值
-uint8_t last_move_time = 0;//最后转动时间
+uint32_t last_move_time = 0;//最后转动时间
 uint8_t encode_static = 0;//0为运动，1为静止
 
 /* USER CODE END PV */
